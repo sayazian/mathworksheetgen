@@ -11,8 +11,9 @@ interface ApiWorksheet {
   editToken?: string
 }
 
-const mockMode =
-  import.meta.env.VITE_USE_MOCK_API === 'true' || !import.meta.env.VITE_SUPABASE_URL
+function isMockMode() {
+  return import.meta.env.VITE_USE_MOCK_API === 'true'
+}
 
 function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.replace(/\/$/, '')
@@ -72,11 +73,11 @@ function toRecord(data: ApiWorksheet): WorksheetRecord {
 }
 
 export function getApiModeLabel() {
-  return mockMode ? 'Mock worksheet mode' : 'Supabase function mode'
+  return isMockMode() ? 'Mock worksheet mode' : 'Supabase function mode'
 }
 
 export async function createWorksheet(topic: string) {
-  if (mockMode) {
+  if (isMockMode()) {
     const record = buildMockWorksheetRecord(topic)
     saveWorksheetRecord(record)
     return record
@@ -102,7 +103,7 @@ export async function createWorksheet(topic: string) {
 }
 
 export async function getWorksheet(id: string, editToken?: string) {
-  if (mockMode) {
+  if (isMockMode()) {
     const storedRecord = loadWorksheetRecord(id)
 
     if (!storedRecord) {
@@ -150,7 +151,7 @@ export async function updateWorksheetVisibility(
   worksheet: WorksheetRecord,
   visibility: WorksheetVisibility,
 ) {
-  if (mockMode) {
+  if (isMockMode()) {
     const record = {
       ...worksheet,
       visibility,

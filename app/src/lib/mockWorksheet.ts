@@ -68,6 +68,38 @@ function buildMultiplicationWorksheet(): WorksheetContent {
   }
 }
 
+function buildSubtractionWorksheet(): WorksheetContent {
+  return {
+    title: 'Subtraction Practice',
+    subtitle: 'Generated worksheet preview',
+    problems: ['52 - 19', '84 - 27', '300 - 145', '71 - 38', '1000 - 468'],
+    answers: ['33', '57', '155', '33', '532'],
+    explanations: [
+      'Borrow from the tens place so 12 - 9 = 3 and 4 - 1 = 3.',
+      'Regroup once in the ones place, then subtract each column.',
+      'Borrow across the tens so the subtraction works column by column.',
+      'Regroup from the tens place before subtracting 8 from 11.',
+      'Subtract the ones, tens, and hundreds carefully after regrouping.',
+    ],
+  }
+}
+
+function buildDivisionWorksheet(): WorksheetContent {
+  return {
+    title: 'Division Practice',
+    subtitle: 'Generated worksheet preview',
+    problems: ['72 / 8', '96 / 12', '144 / 16', '81 / 9', '125 / 5'],
+    answers: ['9', '8', '9', '9', '25'],
+    explanations: [
+      'Eight times nine equals 72.',
+      'Twelve times eight equals 96.',
+      'Sixteen times nine equals 144.',
+      'Nine times nine equals 81.',
+      'Five times twenty-five equals 125.',
+    ],
+  }
+}
+
 function buildDecimalsWorksheet(): WorksheetContent {
   return {
     title: 'Decimals Practice',
@@ -129,6 +161,14 @@ export function buildWorksheetPreview(topic: string): WorksheetContent {
 
   if (key.includes('multiplication') || key.includes('times table')) {
     return buildMultiplicationWorksheet()
+  }
+
+  if (key.includes('subtraction') || key.includes('subtract') || key.includes('minus')) {
+    return buildSubtractionWorksheet()
+  }
+
+  if (key.includes('division') || key.includes('divide') || key.includes('quotient')) {
+    return buildDivisionWorksheet()
   }
 
   if (key.includes('decimal')) {

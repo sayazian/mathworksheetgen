@@ -1,7 +1,8 @@
 # Supabase Setup
 
-This project is structured so the frontend can run in mock mode first and then
-switch to a real Supabase backend when you are ready.
+This project is structured to use the real Supabase backend by default.
+Frontend-only mock mode is still available as an explicit local-development
+option by setting `VITE_USE_MOCK_API=true`.
 
 ## Prerequisites
 
@@ -25,6 +26,21 @@ npx supabase start
 
 That starts the local Supabase stack. Supabase's docs currently say the local
 stack is viewable at `http://localhost:54323`.
+
+## Hosted project link
+
+This repo is configured for the hosted Supabase project:
+
+```text
+juxtmkfewfywpccaylso
+```
+
+To link the CLI after logging in:
+
+```bash
+npx supabase login
+npx supabase link --project-ref juxtmkfewfywpccaylso
+```
 
 ## Apply migrations
 
@@ -91,7 +107,7 @@ VITE_USE_MOCK_API=false
 For a hosted Supabase project, set:
 
 ```text
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_URL=https://juxtmkfewfywpccaylso.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=<your hosted publishable or anon key>
 VITE_USE_MOCK_API=false
 ```
@@ -123,8 +139,8 @@ the hosted project.
 
 ## Current limitation
 
-The app can be fully tested locally in mock mode right now. Real end-to-end
-Supabase testing still depends on:
+The app can be tested locally in explicit mock mode. Real end-to-end Supabase
+testing depends on:
 
 - a working local container runtime or hosted Supabase project
 - your actual Supabase publishable key

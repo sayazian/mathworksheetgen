@@ -20,6 +20,30 @@ interface WorksheetRow {
   created_at: string
 }
 
+interface WorksheetGenerationResult {
+  focus: string
+  worksheet: WorksheetContent
+}
+
+interface WorksheetAlignmentReview {
+  isAligned: boolean
+  reason: string
+}
+
+class OffTopicWorksheetError extends Error {
+  constructor(reason: string) {
+    super(`Worksheet was rejected as off-topic: ${reason}`)
+    this.name = 'OffTopicWorksheetError'
+  }
+}
+
+class WorksheetGenerationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'WorksheetGenerationError'
+  }
+}
+
 const supabaseUrl = Deno.env.get('SUPABASE_URL')
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const openAiApiKey = Deno.env.get('OPENAI_API_KEY')
@@ -46,150 +70,19 @@ function json(data: unknown, status = 200) {
   })
 }
 
-function toTitleCase(value: string) {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word[0]?.toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-}
-
-function buildFractionsWorksheet(): WorksheetContent {
-  return {
-    title: 'Fractions Practice',
-    subtitle: 'Server-generated worksheet draft',
-    problems: [
-      'Simplify 12/18.',
-      'Add 3/4 + 2/5.',
-      'Subtract 7/8 - 1/4.',
-      'Multiply 2/3 x 9/10.',
-      'Divide 3/5 by 9/20.',
-    ],
-    answers: ['2/3', '23/20 or 1 3/20', '5/8', '3/5', '4/3 or 1 1/3'],
-    explanations: [
-      'Divide the numerator and denominator by 6.',
-      'Use a common denominator of 20 before adding.',
-      'Rewrite 1/4 as 2/8, then subtract.',
-      'Multiply numerators and denominators, then simplify.',
-      'Invert 9/20 and multiply by 3/5.',
-    ],
-  }
-}
-
-function buildLinearEquationsWorksheet(): WorksheetContent {
-  return {
-    title: 'Linear Equations Practice',
-    subtitle: 'Server-generated worksheet draft',
-    problems: [
-      'Solve: x + 7 = 19',
-      'Solve: 3x = 27',
-      'Solve: 2x - 5 = 13',
-      'Solve: 4(x + 2) = 28',
-      'Solve: 5x + 9 = 2x + 24',
-    ],
-    answers: ['12', '9', '9', '5', '5'],
-    explanations: [
-      'Subtract 7 from both sides.',
-      'Divide both sides by 3.',
-      'Add 5, then divide by 2.',
-      'Divide by 4, then subtract 2.',
-      'Move x-terms to one side and constants to the other.',
-    ],
-  }
-}
-
-function buildMultiplicationWorksheet(): WorksheetContent {
-  return {
-    title: 'Multiplication Practice',
-    subtitle: 'Server-generated worksheet draft',
-    problems: ['7 x 8', '9 x 6', '12 x 4', '15 x 3', '14 x 7'],
-    answers: ['56', '54', '48', '45', '98'],
-    explanations: [
-      'Seven groups of eight make 56.',
-      'Nine groups of six make 54.',
-      'Twelve groups of four make 48.',
-      'Fifteen groups of three make 45.',
-      'Fourteen groups of seven make 98.',
-    ],
-  }
-}
-
-function buildDecimalsWorksheet(): WorksheetContent {
-  return {
-    title: 'Decimals Practice',
-    subtitle: 'Server-generated worksheet draft',
-    problems: [
-      'Add 3.45 + 2.7.',
-      'Subtract 9.2 - 4.68.',
-      'Multiply 1.2 x 0.5.',
-      'Divide 4.8 by 0.6.',
-      'Round 7.386 to the nearest tenth.',
-    ],
-    answers: ['6.15', '4.52', '0.6', '8', '7.4'],
-    explanations: [
-      'Line up the decimal points before adding.',
-      'Write 9.2 as 9.20, then subtract.',
-      'Multiply 12 x 5 = 60, then place two decimal digits.',
-      'Shift both decimals one place right to get 48 / 6.',
-      'The hundredths digit is 8, so the tenths digit rounds up.',
-    ],
-  }
-}
-
-function buildGenericWorksheet(topic: string): WorksheetContent {
-  const normalizedTopic = topic.trim() || 'arithmetic'
-
-  return {
-    title: `${toTitleCase(normalizedTopic)} Practice`,
-    subtitle: 'Server-generated worksheet draft',
-    problems: [
-      'Compute 18 + 27.',
-      'Compute 56 - 19.',
-      'Compute 7 x 9.',
-      'Compute 84 / 12.',
-      `Write one sentence describing what "${normalizedTopic}" means.`,
-    ],
-    answers: [
-      '45',
-      '37',
-      '63',
-      '7',
-      `${toTitleCase(normalizedTopic)} is a math topic to define in your own words.`,
-    ],
-    explanations: [
-      'Add the tens and ones carefully.',
-      'Borrow from the tens place when subtracting 19 from 56.',
-      'Seven groups of nine make 63.',
-      '84 split into 12 equal groups gives 7.',
-      'This last prompt checks basic conceptual understanding alongside computation.',
-    ],
-  }
-}
-
-function buildWorksheetPreview(topic: string): WorksheetContent {
-  const normalizedTopic = topic.trim() || 'fractions'
-  const key = normalizedTopic.toLowerCase()
-
-  if (key.includes('fraction')) {
-    return buildFractionsWorksheet()
-  }
-
-  if (key.includes('linear') || key.includes('equation') || key.includes('algebra')) {
-    return buildLinearEquationsWorksheet()
-  }
-
-  if (key.includes('multiplication') || key.includes('times table')) {
-    return buildMultiplicationWorksheet()
-  }
-
-  if (key.includes('decimal')) {
-    return buildDecimalsWorksheet()
-  }
-
-  return buildGenericWorksheet(normalizedTopic)
-}
-
 function buildWorksheetSchema() {
+  return {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      focus: { type: 'string' },
+      worksheet: buildWorksheetContentSchema(),
+    },
+    required: ['focus', 'worksheet'],
+  }
+}
+
+function buildWorksheetContentSchema() {
   return {
     type: 'object',
     additionalProperties: false,
@@ -219,8 +112,28 @@ function buildWorksheetSchema() {
   }
 }
 
+function buildWorksheetAlignmentSchema() {
+  return {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      isAligned: { type: 'boolean' },
+      reason: { type: 'string' },
+    },
+    required: ['isAligned', 'reason'],
+  }
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string')
+}
+
+function hasFiveNonEmptyItems(value: unknown) {
+  return (
+    isStringArray(value) &&
+    value.length === 5 &&
+    value.every((item) => item.trim().length > 0)
+  )
 }
 
 function isWorksheetContent(value: unknown): value is WorksheetContent {
@@ -232,17 +145,88 @@ function isWorksheetContent(value: unknown): value is WorksheetContent {
 
   return (
     typeof candidate.title === 'string' &&
+    candidate.title.trim().length > 0 &&
     typeof candidate.subtitle === 'string' &&
-    isStringArray(candidate.problems) &&
-    isStringArray(candidate.answers) &&
-    isStringArray(candidate.explanations) &&
-    candidate.problems.length === 5 &&
-    candidate.answers.length === 5 &&
-    candidate.explanations.length === 5
+    candidate.subtitle.trim().length > 0 &&
+    hasFiveNonEmptyItems(candidate.problems) &&
+    hasFiveNonEmptyItems(candidate.answers) &&
+    hasFiveNonEmptyItems(candidate.explanations)
   )
 }
 
-async function generateWorksheetWithOpenAi(topic: string) {
+function isWorksheetGenerationResult(value: unknown): value is WorksheetGenerationResult {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const candidate = value as Record<string, unknown>
+
+  return (
+    typeof candidate.focus === 'string' &&
+    isWorksheetContent(candidate.worksheet)
+  )
+}
+
+function isWorksheetAlignmentReview(value: unknown): value is WorksheetAlignmentReview {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const candidate = value as Record<string, unknown>
+
+  return (
+    typeof candidate.isAligned === 'boolean' &&
+    typeof candidate.reason === 'string'
+  )
+}
+
+function extractResponseText(payload: unknown) {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const response = payload as Record<string, unknown>
+
+  if (typeof response.output_text === 'string') {
+    return response.output_text
+  }
+
+  if (!Array.isArray(response.output)) {
+    return null
+  }
+
+  for (const outputItem of response.output) {
+    if (!outputItem || typeof outputItem !== 'object') {
+      continue
+    }
+
+    const content = (outputItem as Record<string, unknown>).content
+
+    if (!Array.isArray(content)) {
+      continue
+    }
+
+    for (const contentItem of content) {
+      if (!contentItem || typeof contentItem !== 'object') {
+        continue
+      }
+
+      const text = (contentItem as Record<string, unknown>).text
+
+      if (typeof text === 'string') {
+        return text
+      }
+    }
+  }
+
+  return null
+}
+
+async function requestStructuredOutput<T>(
+  input: unknown[],
+  schemaName: string,
+  schema: Record<string, unknown>,
+) {
   if (!openAiApiKey) {
     return null
   }
@@ -256,39 +240,13 @@ async function generateWorksheetWithOpenAi(topic: string) {
     body: JSON.stringify({
       model: openAiModel,
       reasoning: { effort: 'low' },
-      input: [
-        {
-          role: 'developer',
-          content: [
-            {
-              type: 'input_text',
-              text:
-                'You generate printable grade-school or early algebra math worksheets. ' +
-                'Return exactly five concrete math problems, five matching answers, and five brief explanations. ' +
-                'Do not return teaching guidelines, meta commentary, markdown, or placeholders. ' +
-                'Keep explanations short and student-friendly. Make sure the math is correct.',
-            },
-          ],
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'input_text',
-              text:
-                `Create a math worksheet for the topic: "${topic}". ` +
-                'Choose concrete problems appropriate for a general learner. ' +
-                'If the topic is broad, choose a reasonable sub-scope and reflect it in the title.',
-            },
-          ],
-        },
-      ],
+      input,
       text: {
         format: {
           type: 'json_schema',
-          name: 'worksheet_content',
+          name: schemaName,
           strict: true,
-          schema: buildWorksheetSchema(),
+          schema,
         },
       },
       max_output_tokens: 1200,
@@ -303,34 +261,160 @@ async function generateWorksheetWithOpenAi(topic: string) {
     throw new Error(payload?.error?.message ?? 'OpenAI worksheet generation failed.')
   }
 
-  const payload = (await response.json()) as { output_text?: string | null }
-  const outputText = payload.output_text
+  const payload = await response.json()
+  const outputText = extractResponseText(payload)
 
   if (!outputText) {
-    throw new Error('OpenAI returned no structured worksheet payload.')
+    throw new Error('OpenAI returned no structured payload.')
   }
 
-  const parsed = JSON.parse(outputText) as unknown
+  return JSON.parse(outputText) as T
+}
 
-  if (!isWorksheetContent(parsed)) {
-    throw new Error('OpenAI returned an invalid worksheet shape.')
+async function generateWorksheetWithOpenAi(topic: string, feedback?: string) {
+  const parsed = await requestStructuredOutput<unknown>(
+    [
+      {
+        role: 'developer',
+        content: [
+          {
+            type: 'input_text',
+              text:
+                'You generate printable grade-school or early algebra math worksheets. ' +
+                'Pick the most relevant mathematical interpretation of the requested topic. ' +
+                'Return exactly five concrete math problems, exactly five matching answers, and exactly five brief explanations. ' +
+                'Each answer must match the problem at the same position in the problems array. ' +
+                'Do not include answer numbering inside answer strings because the UI numbers them. ' +
+                'Do not return teaching guidelines, meta commentary, markdown, or placeholders. ' +
+                'Keep explanations short and student-friendly. Make sure the math is correct.',
+          },
+        ],
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_text',
+            text:
+              `Create a math worksheet for the topic: "${topic}". ` +
+              'Choose concrete problems appropriate for a general learner. ' +
+              'If the topic is broad, choose a reasonable sub-scope and reflect it in the title. ' +
+              'The problems should clearly belong to that topic, not just to math in general.',
+          },
+        ],
+      },
+      ...(feedback
+        ? [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_text',
+                  text:
+                    `The previous worksheet draft did not align well enough with the requested topic. ` +
+                    `Fix it using this feedback: ${feedback}`,
+                },
+              ],
+            },
+          ]
+        : []),
+    ],
+    'worksheet_generation',
+    buildWorksheetSchema(),
+  )
+
+  if (!isWorksheetGenerationResult(parsed)) {
+    throw new Error('OpenAI returned an invalid worksheet generation shape.')
+  }
+
+  return parsed
+}
+
+async function reviewWorksheetAlignment(topic: string, worksheet: WorksheetContent) {
+  const parsed = await requestStructuredOutput<unknown>(
+    [
+      {
+        role: 'developer',
+        content: [
+          {
+            type: 'input_text',
+            text:
+              'You review whether a generated math worksheet truly matches the requested topic. ' +
+              'Be strict about topical alignment. A worksheet about general arithmetic is not aligned ' +
+              'if the user asked for a narrower topic like subtraction, fractions, or linear equations.',
+          },
+        ],
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_text',
+            text:
+              `Requested topic: "${topic}". ` +
+              `Worksheet title: "${worksheet.title}". ` +
+              `Problems: ${worksheet.problems.join(' | ')}. ` +
+              `Answers: ${worksheet.answers.join(' | ')}. ` +
+              `Explanations: ${worksheet.explanations.join(' | ')}.`,
+          },
+        ],
+      },
+    ],
+    'worksheet_alignment_review',
+    buildWorksheetAlignmentSchema(),
+  )
+
+  if (!isWorksheetAlignmentReview(parsed)) {
+    throw new Error('OpenAI returned an invalid worksheet alignment review.')
   }
 
   return parsed
 }
 
 async function generateWorksheetContent(topic: string) {
-  try {
-    const aiWorksheet = await generateWorksheetWithOpenAi(topic)
-
-    if (aiWorksheet) {
-      return aiWorksheet
-    }
-  } catch (error) {
-    console.error('Falling back to deterministic worksheet generator:', error)
+  if (!openAiApiKey) {
+    throw new WorksheetGenerationError(
+      'OpenAI API key is required to generate worksheets.',
+    )
   }
 
-  return buildWorksheetPreview(topic)
+  try {
+    let alignmentFeedback: string | undefined
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const generated = await generateWorksheetWithOpenAi(topic, alignmentFeedback)
+
+      if (!generated) {
+        throw new WorksheetGenerationError('OpenAI returned no worksheet draft.')
+      }
+
+      const review = await reviewWorksheetAlignment(topic, generated.worksheet)
+
+      if (review.isAligned) {
+        return generated.worksheet
+      }
+
+      alignmentFeedback = review.reason
+
+      if (attempt === 1) {
+        throw new OffTopicWorksheetError(review.reason)
+      }
+    }
+  } catch (error) {
+    if (error instanceof OffTopicWorksheetError) {
+      throw error
+    }
+
+    throw new WorksheetGenerationError(
+      error instanceof Error
+        ? error.message
+        : 'Worksheet generation failed before a valid worksheet could be produced.',
+    )
+  }
+
+  throw new WorksheetGenerationError(
+    'Worksheet generation did not produce an aligned worksheet.',
+  )
 }
 
 async function hashToken(token: string) {
@@ -492,6 +576,14 @@ Deno.serve(async (request) => {
   } catch (error) {
     if (error instanceof Response) {
       return error
+    }
+
+    if (error instanceof OffTopicWorksheetError) {
+      return json({ error: error.message }, 422)
+    }
+
+    if (error instanceof WorksheetGenerationError) {
+      return json({ error: error.message }, 503)
     }
 
     return json(

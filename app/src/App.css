@@ -4,15 +4,6 @@
   padding: 2rem;
 }
 
-.hero-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.9fr);
-  gap: 1.5rem;
-  align-items: stretch;
-}
-
-.hero-copy,
-.status-card,
 .composer-card,
 .preview-card {
   border: 1px solid var(--border);
@@ -21,51 +12,44 @@
   box-shadow: var(--shadow);
 }
 
-.hero-copy {
-  padding: 2rem;
-  background:
-    radial-gradient(circle at top left, rgba(244, 167, 66, 0.22), transparent 34%),
-    linear-gradient(135deg, rgba(24, 57, 89, 0.96), rgba(14, 29, 44, 0.98));
-  color: #f8f4ec;
-}
-
-.hero-copy h1 {
-  color: inherit;
-  margin-bottom: 1rem;
-}
-
-.lede {
-  max-width: 58ch;
-  color: rgba(248, 244, 236, 0.82);
-}
-
-.eyebrow,
-.section-kicker,
-.status-label {
+.section-kicker {
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 0.75rem;
   font-weight: 700;
 }
 
-.eyebrow {
-  color: #f4c26c;
-  margin-bottom: 0.75rem;
-}
-
-.status-card {
-  padding: 1.5rem;
+.page-title {
+  position: relative;
+  overflow: hidden;
+  padding: 1.8rem 2rem;
+  border: 1px solid rgba(102, 78, 52, 0.16);
+  border-radius: 30px;
   background:
-    linear-gradient(180deg, rgba(255, 251, 245, 0.98), rgba(247, 241, 230, 0.98));
+    radial-gradient(circle at 88% 18%, rgba(244, 194, 108, 0.7), transparent 24%),
+    radial-gradient(circle at 8% 96%, rgba(202, 95, 29, 0.24), transparent 30%),
+    linear-gradient(135deg, #fff8ea 0%, #f5dfba 48%, #fdf8ef 100%);
+  box-shadow: var(--shadow);
 }
 
-.status-card ul {
-  margin: 1rem 0 0;
-  padding-left: 1.2rem;
+.page-title::after {
+  content: '';
+  position: absolute;
+  inset: auto -3rem -5rem auto;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.38);
 }
 
-.status-card li + li {
-  margin-top: 0.65rem;
+.page-title h1 {
+  position: relative;
+  margin: 0.35rem 0 0;
+  white-space: nowrap;
+}
+
+.page-title .section-kicker {
+  position: relative;
 }
 
 .workspace {
@@ -105,8 +89,7 @@
   color: var(--text-h);
 }
 
-.field input,
-.field textarea {
+.field input {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--border);
@@ -115,18 +98,6 @@
   background: #fffdf8;
   color: var(--text-h);
   font: inherit;
-}
-
-.field textarea {
-  min-height: 7rem;
-  resize: vertical;
-}
-
-.callout {
-  padding: 1rem 1.1rem;
-  border-radius: 20px;
-  background: var(--accent-soft);
-  color: var(--text-h);
 }
 
 .meta-note,
@@ -172,8 +143,7 @@
 
 .primary-action:focus-visible,
 .secondary-action:focus-visible,
-.field input:focus-visible,
-.field textarea:focus-visible {
+.field input:focus-visible {
   outline: 3px solid rgba(202, 95, 29, 0.28);
   outline-offset: 2px;
 }
@@ -192,10 +162,8 @@
 
 .secondary-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 1rem;
-  margin-top: 1rem;
   flex-wrap: wrap;
 }
 
@@ -211,11 +179,12 @@
 }
 
 .token-note {
+  flex: 1 1 12rem;
   color: var(--muted);
+  margin: 0.6rem 0 0;
 }
 
 .share-card {
-  margin-top: 1rem;
   padding: 1rem;
   border-radius: 18px;
   background: rgba(255, 248, 238, 0.95);
@@ -266,7 +235,6 @@
 }
 
 @media (max-width: 960px) {
-  .hero-panel,
   .workspace,
   .preview-grid {
     grid-template-columns: 1fr;
@@ -274,5 +242,9 @@
 
   .app-shell {
     padding: 1rem;
+  }
+
+  .page-title h1 {
+    white-space: normal;
   }
 }

@@ -173,26 +173,10 @@ function App() {
 
   return (
     <main className="app-shell">
-      <section className="hero-panel">
-        <div className="hero-copy">
-          <p className="eyebrow">Milestone 2 scaffold</p>
-          <h1>Generate worksheets without starting from a template demo.</h1>
-          <p className="lede">
-            This first slice sets up the React and TypeScript foundation for an
-            anonymous-first worksheet generator. The UI is still stubbed, but
-            the structure now matches the product instead of the Vite starter.
-          </p>
-        </div>
-
-        <div className="status-card" aria-label="Current build plan">
-          <p className="status-label">Current focus</p>
-          <ul>
-            <li>Topic input flow</li>
-            <li>Supabase-ready API boundary</li>
-            <li>Local ownership token persistence</li>
-          </ul>
-        </div>
-      </section>
+      <header className="page-title">
+        <p className="section-kicker">Math worksheet generator</p>
+        <h1>Math Worksheet Maker</h1>
+      </header>
 
       <section className="workspace">
         <form className="composer-card" onSubmit={handleGenerate}>
@@ -211,20 +195,6 @@ function App() {
             />
           </label>
 
-          <label className="field">
-            <span>Intent for v1</span>
-            <textarea
-              readOnly
-              value="Generate browser-first worksheets with saved problems, answer keys, and brief explanations."
-            />
-          </label>
-
-          <div className="callout">
-            <strong>Why this is simple on purpose:</strong> we are keeping the
-            first version to one input and one generated output shape so the
-            React data flow stays easy to reason about.
-          </div>
-
           <div className="meta-note">
             <strong>Data mode:</strong> {getApiModeLabel()}
           </div>
@@ -240,19 +210,10 @@ function App() {
               ? 'Generating worksheet...'
               : `Generate worksheet for ${topic || 'your topic'}`}
           </button>
-        </form>
 
-        <section className="preview-card" aria-labelledby="preview-title">
-          <div className="section-heading">
-            <p className="section-kicker">Preview</p>
-            <h2 id="preview-title">
-              {isLoadingWorksheet ? 'Loading worksheet...' : worksheet.content.title}
-            </h2>
-            <p className="preview-subtitle">{worksheet.content.subtitle}</p>
-            <div className="preview-meta">
-              <span>Visibility: {worksheet.visibility}</span>
-              <span>Saved record: {worksheet.id.slice(0, 8)}</span>
-            </div>
+          <div className="preview-meta">
+            <span>Visibility: {worksheet.visibility}</span>
+            <span>Saved record: {worksheet.id.slice(0, 8)}</span>
           </div>
 
           <div className="secondary-actions">
@@ -277,13 +238,23 @@ function App() {
             <p className="share-label">Current worksheet URL</p>
             <code>{shareUrl}</code>
           </div>
+        </form>
+
+        <section className="preview-card" aria-labelledby="preview-title">
+          <div className="section-heading">
+            <p className="section-kicker">Preview</p>
+            <h2 id="preview-title">
+              {isLoadingWorksheet ? 'Loading worksheet...' : worksheet.content.title}
+            </h2>
+            <p className="preview-subtitle">{worksheet.content.subtitle}</p>
+          </div>
 
           <div className="preview-grid">
             <article>
               <h3>Problems</h3>
               <ol>
-                {worksheet.content.problems.map((problem) => (
-                  <li key={problem}>{problem}</li>
+                {worksheet.content.problems.map((problem, index) => (
+                  <li key={`${index}-${problem}`}>{problem}</li>
                 ))}
               </ol>
             </article>
@@ -291,8 +262,10 @@ function App() {
             <article>
               <h3>Answer key</h3>
               <ol>
-                {worksheet.content.answers.map((answer) => (
-                  <li key={answer}>{answer}</li>
+                {worksheet.content.problems.map((problem, index) => (
+                  <li key={`${problem}-${worksheet.content.answers[index]}`}>
+                    {worksheet.content.answers[index] ?? 'Missing answer'}
+                  </li>
                 ))}
               </ol>
             </article>
@@ -300,8 +273,10 @@ function App() {
             <article className="explanations">
               <h3>Brief explanations</h3>
               <ol>
-                {worksheet.content.explanations.map((explanation) => (
-                  <li key={explanation}>{explanation}</li>
+                {worksheet.content.problems.map((problem, index) => (
+                  <li key={`${problem}-${worksheet.content.explanations[index]}`}>
+                    {worksheet.content.explanations[index] ?? 'Missing explanation'}
+                  </li>
                 ))}
               </ol>
             </article>

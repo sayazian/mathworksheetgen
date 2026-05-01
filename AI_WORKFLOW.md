@@ -46,6 +46,8 @@ What we did:
 - Added a minimal testing baseline with Vitest and Testing Library.
 - Replaced the starter UI with an app shell shaped around the worksheet flow.
 - Added `.env.example` to make the API boundary explicit before backend work.
+- Later changed mock mode to an explicit opt-in so missing backend config does
+  not silently produce fake worksheets.
 
 What to watch:
 - This shell uses local component state only. That is deliberate. We should not
@@ -107,10 +109,31 @@ Why it fits:
 What we did:
 - Added an OpenAI Responses API call in the Supabase function.
 - Used structured JSON output for the worksheet payload shape.
-- Kept the deterministic generator as a fallback when the API key is missing or
-  the model response is malformed.
+- Initially kept deterministic server fallback for development safety. This was
+  later removed from the real Supabase generation path once topic alignment
+  became the higher priority.
 
 What to watch:
-- The current fallback is useful for development, but production success now
-  depends on wiring `OPENAI_API_KEY` and testing the real model behavior on a
-  range of math topics.
+- Production generation now depends on wiring `OPENAI_API_KEY` and testing the
+  real model behavior on a range of math topics.
+
+## Entry 6: Validate topic alignment, not just JSON shape
+
+Pattern used: generate-then-judge.
+
+Why it fits:
+- A well-formed worksheet can still be the wrong worksheet.
+- Topic alignment is a semantic quality check, not just a schema check.
+
+What we did:
+- Added a second LLM pass that reviews whether the generated worksheet truly
+  matches the requested topic.
+- Added one retry path so an off-topic draft can be regenerated with reviewer
+  feedback.
+- Removed deterministic fallback from the real Supabase generation path. The
+  server now either produces an LLM-generated aligned worksheet or returns an
+  error.
+
+What to watch:
+- This is stronger than keyword matching, but it still does not create a
+  mathematical correctness guarantee. It improves topical relevance first.

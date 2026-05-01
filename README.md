@@ -38,6 +38,7 @@ Not implemented yet:
 - [TASK_BREAKDOWN.md](/Users/sahar/Work/Projects/mathworksheetgen/TASK_BREAKDOWN.md): milestone plan
 - [AI_WORKFLOW.md](/Users/sahar/Work/Projects/mathworksheetgen/AI_WORKFLOW.md): record of prompting and workflow choices
 - [SUPABASE_SETUP.md](/Users/sahar/Work/Projects/mathworksheetgen/SUPABASE_SETUP.md): local and hosted Supabase setup notes
+- [RAILWAY_DEPLOY.md](/Users/sahar/Work/Projects/mathworksheetgen/RAILWAY_DEPLOY.md): Railway deployment setup for the frontend
 - [app](/Users/sahar/Work/Projects/mathworksheetgen/app): React frontend
 - [supabase](/Users/sahar/Work/Projects/mathworksheetgen/supabase): migrations and Edge Function code
 - [docs/adr](/Users/sahar/Work/Projects/mathworksheetgen/docs/adr): architecture decision records
@@ -60,11 +61,27 @@ Mock mode is enabled by default in [app/.env.example](/Users/sahar/Work/Projects
 VITE_USE_MOCK_API=true
 ```
 
+Mock mode can still be enabled explicitly for frontend-only development by
+setting:
+
+```text
+VITE_USE_MOCK_API=true
+```
+
 In mock mode:
 
 - worksheets are generated locally
 - worksheet URLs still work
 - ownership tokens are simulated in browser storage
+
+For real worksheet generation, use:
+
+```text
+VITE_USE_MOCK_API=false
+```
+
+That makes the frontend call the Supabase function, which uses OpenAI
+generation plus topic-alignment review.
 
 ## Running checks
 
@@ -91,6 +108,18 @@ At a high level:
    - Supabase publishable key
    - OpenAI API key
 5. Serve or deploy the `worksheets` Edge Function
+
+## Deploying on Railway
+
+Use [RAILWAY_DEPLOY.md](/Users/sahar/Work/Projects/mathworksheetgen/RAILWAY_DEPLOY.md).
+
+The frontend now includes:
+
+- a production [Dockerfile](/Users/sahar/Work/Projects/mathworksheetgen/app/Dockerfile)
+- a [Caddyfile](/Users/sahar/Work/Projects/mathworksheetgen/app/Caddyfile) for
+  static file serving and SPA route fallback
+
+For Railway, the frontend service should point at `/app` as its root directory.
 
 ## Key technical decisions
 
