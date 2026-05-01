@@ -1,0 +1,80 @@
+:root {
+  --text: #5c5147;
+  --text-h: #1f1a16;
+  --bg: #f6f0e6;
+  --border: rgba(90, 69, 44, 0.16);
+  --panel: rgba(255, 251, 245, 0.9);
+  --accent-soft: rgba(244, 167, 66, 0.18);
+  --muted: #866f5a;
+  --shadow:
+    rgba(88, 62, 35, 0.12) 0 18px 40px -24px,
+    rgba(52, 37, 20, 0.1) 0 12px 24px -18px;
+
+  --sans: 'DM Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+  --heading: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+#root {
+  width: 1200px;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100svh;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top, rgba(240, 170, 92, 0.28), transparent 28%),
+    linear-gradient(180deg, #f7f1e7 0%, #f4ecdf 44%, #efe4d3 100%);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--heading);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: clamp(2.5rem, 4vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  margin: 0;
+  @media (max-width: 1024px) {
+    font-size: 2.8rem;
+  }
+}
+
+h2 {
+  font-size: 1.8rem;
+  line-height: 118%;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+code {
+  font-family: var(--mono);
+}
