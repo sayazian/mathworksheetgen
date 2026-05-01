@@ -205,10 +205,16 @@ function App() {
             </p>
           ) : null}
 
-          <button type="submit" className="primary-action" disabled={isGenerating}>
-            {isGenerating
-              ? 'Generating worksheet...'
-              : `Generate worksheet for ${topic || 'your topic'}`}
+          <button
+            type="submit"
+            className="primary-action"
+            disabled={isGenerating || isLoadingWorksheet}
+          >
+            {isLoadingWorksheet
+              ? 'Loading worksheet...'
+              : isGenerating
+                ? 'Generating worksheet...'
+                : `Generate worksheet for ${topic || 'your topic'}`}
           </button>
 
           <div className="preview-meta">
