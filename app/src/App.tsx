@@ -202,6 +202,7 @@ function App() {
     return publicUrl.toString()
   })()
   const canEditWorksheet = Boolean(worksheet?.editToken)
+  const isPublicViewer = Boolean(worksheet && !canEditWorksheet)
 
   async function handleCopyShareLink() {
     if (!shareUrl) {
@@ -223,8 +224,9 @@ function App() {
         <h1>Math Worksheet Maker</h1>
       </header>
 
-      <section className="workspace">
-        <form className="composer-card" onSubmit={handleGenerate}>
+      <section className={isPublicViewer ? 'workspace viewer-workspace' : 'workspace'}>
+        {!isPublicViewer ? (
+          <form className="composer-card" onSubmit={handleGenerate}>
           <div className="section-heading">
             <p className="section-kicker">Worksheet request</p>
             <h2>Describe the math topic</h2>
@@ -336,7 +338,8 @@ function App() {
               ) : null}
             </div>
           ) : null}
-        </form>
+          </form>
+        ) : null}
 
         <section className="preview-card" aria-labelledby="preview-title">
           <div className="section-heading">

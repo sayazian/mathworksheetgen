@@ -209,6 +209,11 @@ describe('App', () => {
     render(<App />)
 
     expect(await screen.findByText('Problem 5')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /describe the math topic/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: /topic/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('spinbutton', { name: /number of problems/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /generate worksheet/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /clear worksheet/i })).not.toBeInTheDocument()
     expect(screen.queryByText('Answer key')).not.toBeInTheDocument()
     expect(screen.queryByText('Brief explanations')).not.toBeInTheDocument()
     expect(screen.queryByText('A1')).not.toBeInTheDocument()

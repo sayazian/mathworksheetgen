@@ -59,6 +59,10 @@
   align-items: start;
 }
 
+.viewer-workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .composer-card,
 .preview-card {
   padding: 1.5rem;
