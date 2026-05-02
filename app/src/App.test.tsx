@@ -102,16 +102,15 @@ describe('App', () => {
       screen.getByRole('button', { name: /generate worksheet for fractions/i }),
     )
 
-    expect(
-      await screen.findByText(/make this worksheet public before sharing a link/i),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /copy public link/i })).not.toBeInTheDocument()
+    expect(await screen.findByText('Simplify 12/18.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /copy public link/i })).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: /make public/i }))
 
     const copyButton = await screen.findByRole('button', {
       name: /copy public link/i,
     })
+    expect(copyButton).toBeEnabled()
     fireEvent.click(copyButton)
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(

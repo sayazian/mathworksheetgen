@@ -205,7 +205,7 @@ function App() {
   const isPublicViewer = Boolean(worksheet && !canEditWorksheet)
 
   async function handleCopyShareLink() {
-    if (!shareUrl) {
+    if (!shareUrl || worksheet?.visibility !== 'public') {
       return
     }
 
@@ -287,49 +287,43 @@ function App() {
           >
             Clear worksheet
           </button>
+          </form>
+        ) : null}
 
+        <section className="preview-card" aria-labelledby="preview-title">
           {worksheet && canEditWorksheet ? (
-            <div className="preview-meta">
-              <span>Visibility: {worksheet.visibility}</span>
-              <span>Saved record: {worksheet.id.slice(0, 8)}</span>
-            </div>
-          ) : null}
+            <div className="worksheet-toolbar">
+              <div className="preview-meta">
+                <span>Visibility: {worksheet.visibility}</span>
+                <span>Saved record: {worksheet.id.slice(0, 8)}</span>
+              </div>
 
-          {worksheet && canEditWorksheet ? (
-            <div className="secondary-actions">
-              <button
-                type="button"
-                className="secondary-action"
-                onClick={handleVisibilityToggle}
-                disabled={isSavingVisibility || isLoadingWorksheet}
-              >
-                {isSavingVisibility
-                  ? 'Saving...'
-                  : worksheet.visibility === 'private'
-                    ? 'Make public'
-                    : 'Make private'}
-              </button>
-              <p className="token-note">
-                This browser currently holds the worksheet edit token.
-              </p>
-            </div>
-          ) : null}
-
-          {worksheet && canEditWorksheet ? (
-            <div className="share-actions">
-              {worksheet.visibility === 'public' ? (
+              <div className="worksheet-actions">
+                <button
+                  type="button"
+                  className="secondary-action"
+                  onClick={handleVisibilityToggle}
+                  disabled={isSavingVisibility || isLoadingWorksheet}
+                >
+                  {isSavingVisibility
+                    ? 'Saving...'
+                    : worksheet.visibility === 'private'
+                      ? 'Make public'
+                      : 'Make private'}
+                </button>
                 <button
                   type="button"
                   className="secondary-action"
                   onClick={handleCopyShareLink}
+                  disabled={
+                    worksheet.visibility !== 'public' ||
+                    isSavingVisibility ||
+                    isLoadingWorksheet
+                  }
                 >
                   Copy public link
                 </button>
-              ) : (
-                <p className="share-label">
-                  Make this worksheet public before sharing a link.
-                </p>
-              )}
+              </div>
 
               {copyMessage ? (
                 <p className="share-status" role="status">
@@ -338,10 +332,7 @@ function App() {
               ) : null}
             </div>
           ) : null}
-          </form>
-        ) : null}
 
-        <section className="preview-card" aria-labelledby="preview-title">
           <div className="section-heading">
             <p className="section-kicker">Preview</p>
             <h2 id="preview-title">
