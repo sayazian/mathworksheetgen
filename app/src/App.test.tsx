@@ -116,7 +116,7 @@ describe('App', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
       expect.stringMatching(/\?worksheet=/),
     )
-    expect(await screen.findByText(/public link copied/i)).toBeInTheDocument()
+    expect(screen.queryByText(/public link copied/i)).not.toBeInTheDocument()
   })
 
   it('generates subtraction problems for the subtraction topic', async () => {

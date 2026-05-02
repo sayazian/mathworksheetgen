@@ -59,7 +59,6 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSavingVisibility, setIsSavingVisibility] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [copyMessage, setCopyMessage] = useState('')
   const [hasHydratedFromUrl, setHasHydratedFromUrl] = useState(() =>
     !hasWorksheetInUrl(),
   )
@@ -137,7 +136,6 @@ function App() {
     try {
       const nextWorksheet = await createWorksheet(nextTopic, problemCount)
       setWorksheet(nextWorksheet)
-      setCopyMessage('')
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -164,7 +162,6 @@ function App() {
         nextVisibility,
       )
       setWorksheet(nextWorksheet)
-      setCopyMessage('')
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -184,7 +181,6 @@ function App() {
     setIsLoadingWorksheet(false)
     setIsGenerating(false)
     setIsSavingVisibility(false)
-    setCopyMessage('')
     setHasHydratedFromUrl(true)
     clearLatestWorksheetRecord()
     clearWorksheetParams()
@@ -211,9 +207,8 @@ function App() {
 
     try {
       await navigator.clipboard.writeText(shareUrl)
-      setCopyMessage('Public link copied.')
     } catch {
-      setCopyMessage('Unable to copy. Select and copy the browser URL instead.')
+      setErrorMessage('Unable to copy. Select and copy the browser URL instead.')
     }
   }
 
@@ -293,11 +288,6 @@ function App() {
         <section className="preview-card" aria-labelledby="preview-title">
           {worksheet && canEditWorksheet ? (
             <div className="worksheet-toolbar">
-              <div className="preview-meta">
-                <span>Visibility: {worksheet.visibility}</span>
-                <span>Saved record: {worksheet.id.slice(0, 8)}</span>
-              </div>
-
               <div className="worksheet-actions">
                 <button
                   type="button"
@@ -324,12 +314,6 @@ function App() {
                   Copy public link
                 </button>
               </div>
-
-              {copyMessage ? (
-                <p className="share-status" role="status">
-                  {copyMessage}
-                </p>
-              ) : null}
             </div>
           ) : null}
 
