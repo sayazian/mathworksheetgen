@@ -60,9 +60,29 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /clear worksheet/i }))
 
     expect(screen.getByRole('textbox', { name: /topic/i })).toHaveValue('')
+    expect(screen.getByRole('spinbutton', { name: /number of problems/i })).toHaveValue(5)
     expect(screen.getByText(/no worksheet yet/i)).toBeInTheDocument()
     expect(screen.queryByText('72 / 8')).not.toBeInTheDocument()
     expect(screen.queryByText(/copy public link/i)).not.toBeInTheDocument()
+  })
+
+  it('generates the requested number of problems', async () => {
+    render(<App />)
+
+    fireEvent.change(screen.getByRole('textbox', { name: /topic/i }), {
+      target: { value: 'fractions' },
+    })
+    fireEvent.change(screen.getByRole('spinbutton', { name: /number of problems/i }), {
+      target: { value: '3' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate worksheet for fractions/i }),
+    )
+
+    expect(await screen.findByText('Simplify 12/18.')).toBeInTheDocument()
+    expect(screen.getByText('Subtract 7/8 - 1/4.')).toBeInTheDocument()
+    expect(screen.queryByText('Multiply 2/3 x 9/10.')).not.toBeInTheDocument()
   })
 
   it('shows copy link only after the worksheet is public', async () => {

@@ -87,9 +87,9 @@ export function getApiModeLabel() {
   return isMockMode() ? 'Mock worksheet mode' : 'Supabase function mode'
 }
 
-export async function createWorksheet(topic: string) {
+export async function createWorksheet(topic: string, problemCount: number) {
   if (isMockMode()) {
-    const record = buildMockWorksheetRecord(topic)
+    const record = buildMockWorksheetRecord(topic, problemCount)
     saveWorksheetRecord(record)
     return record
   }
@@ -104,7 +104,7 @@ export async function createWorksheet(topic: string) {
     await fetch(`${baseUrl}/worksheets`, {
       method: 'POST',
       headers: getFunctionHeaders(),
-      body: JSON.stringify({ topic }),
+      body: JSON.stringify({ topic, problemCount }),
     }),
   )
 

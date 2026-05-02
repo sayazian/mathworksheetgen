@@ -51,6 +51,7 @@ function clearWorksheetParams() {
 
 function App() {
   const [topic, setTopic] = useState('')
+  const [problemCount, setProblemCount] = useState(5)
   const [worksheet, setWorksheet] = useState<WorksheetRecord | null>(null)
   const [isLoadingWorksheet, setIsLoadingWorksheet] = useState(() =>
     hasWorksheetInUrl(),
@@ -134,7 +135,7 @@ function App() {
     setErrorMessage('')
 
     try {
-      const nextWorksheet = await createWorksheet(nextTopic)
+      const nextWorksheet = await createWorksheet(nextTopic, problemCount)
       setWorksheet(nextWorksheet)
       setCopyMessage('')
     } catch (error) {
@@ -177,6 +178,7 @@ function App() {
 
   function handleClear() {
     setTopic('')
+    setProblemCount(5)
     setWorksheet(null)
     setErrorMessage('')
     setIsLoadingWorksheet(false)
@@ -235,6 +237,21 @@ function App() {
               value={topic}
               onChange={(event) => setTopic(event.target.value)}
               placeholder="fractions, linear equations, multiplication facts"
+            />
+          </label>
+
+          <label className="field">
+            <span>Number of problems</span>
+            <input
+              name="problemCount"
+              type="number"
+              min="1"
+              max="10"
+              value={problemCount}
+              onChange={(event) => {
+                const nextCount = Number(event.target.value)
+                setProblemCount(Math.min(Math.max(nextCount || 1, 1), 10))
+              }}
             />
           </label>
 

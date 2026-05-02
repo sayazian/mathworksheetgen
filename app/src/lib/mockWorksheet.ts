@@ -147,44 +147,74 @@ function buildGenericWorksheet(topic: string): WorksheetContent {
   }
 }
 
-export function buildWorksheetPreview(topic: string): WorksheetContent {
-  const normalizedTopic = topic.trim() || 'fractions'
-  const key = normalizedTopic.toLowerCase()
+function resizeWorksheet(content: WorksheetContent, problemCount: number): WorksheetContent {
+  const targetCount = Math.min(Math.max(Math.trunc(problemCount), 1), 10)
 
-  if (key.includes('fraction')) {
-    return buildFractionsWorksheet()
+  if (targetCount <= content.problems.length) {
+    return {
+      ...content,
+      problems: content.problems.slice(0, targetCount),
+      answers: content.answers.slice(0, targetCount),
+      explanations: content.explanations.slice(0, targetCount),
+    }
   }
 
-  if (key.includes('linear') || key.includes('equation') || key.includes('algebra')) {
-    return buildLinearEquationsWorksheet()
+  const problems = [...content.problems]
+  const answers = [...content.answers]
+  const explanations = [...content.explanations]
+
+  for (let index = content.problems.length; index < targetCount; index += 1) {
+    const itemNumber = index + 1
+    problems.push(`Write a new ${content.title.toLowerCase()} problem ${itemNumber}.`)
+    answers.push('Answers may vary.')
+    explanations.push('This is an extension prompt for additional practice.')
   }
 
-  if (key.includes('multiplication') || key.includes('times table')) {
-    return buildMultiplicationWorksheet()
+  return {
+    ...content,
+    problems,
+    answers,
+    explanations,
   }
-
-  if (key.includes('subtraction') || key.includes('subtract') || key.includes('minus')) {
-    return buildSubtractionWorksheet()
-  }
-
-  if (key.includes('division') || key.includes('divide') || key.includes('quotient')) {
-    return buildDivisionWorksheet()
-  }
-
-  if (key.includes('decimal')) {
-    return buildDecimalsWorksheet()
-  }
-
-  return buildGenericWorksheet(normalizedTopic)
 }
 
-export function buildMockWorksheetRecord(topic: string): WorksheetRecord {
+export function buildWorksheetPreview(
+  topic: string,
+  problemCount = 5,
+): WorksheetContent {
+  const normalizedTopic = topic.trim() || 'fractions'
+  const key = normalizedTopic.toLowerCase()
+  let content: WorksheetContent
+
+  if (key.includes('fraction')) {
+    content = buildFractionsWorksheet()
+  } else if (key.includes('linear') || key.includes('equation') || key.includes('algebra')) {
+    content = buildLinearEquationsWorksheet()
+  } else if (key.includes('multiplication') || key.includes('times table')) {
+    content = buildMultiplicationWorksheet()
+  } else if (key.includes('subtraction') || key.includes('subtract') || key.includes('minus')) {
+    content = buildSubtractionWorksheet()
+  } else if (key.includes('division') || key.includes('divide') || key.includes('quotient')) {
+    content = buildDivisionWorksheet()
+  } else if (key.includes('decimal')) {
+    content = buildDecimalsWorksheet()
+  } else {
+    content = buildGenericWorksheet(normalizedTopic)
+  }
+
+  return resizeWorksheet(content, problemCount)
+}
+
+export function buildMockWorksheetRecord(
+  topic: string,
+  problemCount = 5,
+): WorksheetRecord {
   return {
     id: crypto.randomUUID(),
     topic,
     visibility: 'private',
     createdAt: new Date().toISOString(),
     editToken: crypto.randomUUID(),
-    content: buildWorksheetPreview(topic),
+    content: buildWorksheetPreview(topic, problemCount),
   }
 }

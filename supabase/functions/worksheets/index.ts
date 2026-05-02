@@ -70,19 +70,34 @@ function json(data: unknown, status = 200) {
   })
 }
 
-function buildWorksheetSchema() {
+const defaultProblemCount = 5
+const minProblemCount = 1
+const maxProblemCount = 10
+
+function normalizeProblemCount(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return defaultProblemCount
+  }
+
+  return Math.min(
+    Math.max(Math.trunc(value), minProblemCount),
+    maxProblemCount,
+  )
+}
+
+function buildWorksheetSchema(problemCount: number) {
   return {
     type: 'object',
     additionalProperties: false,
     properties: {
       focus: { type: 'string' },
-      worksheet: buildWorksheetContentSchema(),
+      worksheet: buildWorksheetContentSchema(problemCount),
     },
     required: ['focus', 'worksheet'],
   }
 }
 
-function buildWorksheetContentSchema() {
+function buildWorksheetContentSchema(problemCount: number) {
   return {
     type: 'object',
     additionalProperties: false,
@@ -91,20 +106,20 @@ function buildWorksheetContentSchema() {
       subtitle: { type: 'string' },
       problems: {
         type: 'array',
-        minItems: 5,
-        maxItems: 5,
+        minItems: problemCount,
+        maxItems: problemCount,
         items: { type: 'string' },
       },
       answers: {
         type: 'array',
-        minItems: 5,
-        maxItems: 5,
+        minItems: problemCount,
+        maxItems: problemCount,
         items: { type: 'string' },
       },
       explanations: {
         type: 'array',
-        minItems: 5,
-        maxItems: 5,
+        minItems: problemCount,
+        maxItems: problemCount,
         items: { type: 'string' },
       },
     },
@@ -128,15 +143,18 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string')
 }
 
-function hasFiveNonEmptyItems(value: unknown) {
+function hasExpectedNonEmptyItems(value: unknown, problemCount: number) {
   return (
     isStringArray(value) &&
-    value.length === 5 &&
+    value.length === problemCount &&
     value.every((item) => item.trim().length > 0)
   )
 }
 
-function isWorksheetContent(value: unknown): value is WorksheetContent {
+function isWorksheetContent(
+  value: unknown,
+  problemCount: number,
+): value is WorksheetContent {
   if (!value || typeof value !== 'object') {
     return false
   }
@@ -148,13 +166,16 @@ function isWorksheetContent(value: unknown): value is WorksheetContent {
     candidate.title.trim().length > 0 &&
     typeof candidate.subtitle === 'string' &&
     candidate.subtitle.trim().length > 0 &&
-    hasFiveNonEmptyItems(candidate.problems) &&
-    hasFiveNonEmptyItems(candidate.answers) &&
-    hasFiveNonEmptyItems(candidate.explanations)
+    hasExpectedNonEmptyItems(candidate.problems, problemCount) &&
+    hasExpectedNonEmptyItems(candidate.answers, problemCount) &&
+    hasExpectedNonEmptyItems(candidate.explanations, problemCount)
   )
 }
 
-function isWorksheetGenerationResult(value: unknown): value is WorksheetGenerationResult {
+function isWorksheetGenerationResult(
+  value: unknown,
+  problemCount: number,
+): value is WorksheetGenerationResult {
   if (!value || typeof value !== 'object') {
     return false
   }
@@ -163,7 +184,7 @@ function isWorksheetGenerationResult(value: unknown): value is WorksheetGenerati
 
   return (
     typeof candidate.focus === 'string' &&
-    isWorksheetContent(candidate.worksheet)
+    isWorksheetContent(candidate.worksheet, problemCount)
   )
 }
 
@@ -271,7 +292,11 @@ async function requestStructuredOutput<T>(
   return JSON.parse(outputText) as T
 }
 
-async function generateWorksheetWithOpenAi(topic: string, feedback?: string) {
+async function generateWorksheetWithOpenAi(
+  topic: string,
+  problemCount: number,
+  feedback?: string,
+) {
   const parsed = await requestStructuredOutput<unknown>(
     [
       {
@@ -282,7 +307,7 @@ async function generateWorksheetWithOpenAi(topic: string, feedback?: string) {
               text:
                 'You generate printable grade-school or early algebra math worksheets. ' +
                 'Pick the most relevant mathematical interpretation of the requested topic. ' +
-                'Return exactly five concrete math problems, exactly five matching answers, and exactly five brief explanations. ' +
+                `Return exactly ${problemCount} concrete math problems, exactly ${problemCount} matching answers, and exactly ${problemCount} brief explanations. ` +
                 'Each answer must match the problem at the same position in the problems array. ' +
                 'Do not include answer numbering inside answer strings because the UI numbers them. ' +
                 'Do not return teaching guidelines, meta commentary, markdown, or placeholders. ' +
@@ -297,6 +322,7 @@ async function generateWorksheetWithOpenAi(topic: string, feedback?: string) {
             type: 'input_text',
             text:
               `Create a math worksheet for the topic: "${topic}". ` +
+              `The worksheet must contain exactly ${problemCount} problems. ` +
               'Choose concrete problems appropriate for a general learner. ' +
               'If the topic is broad, choose a reasonable sub-scope and reflect it in the title. ' +
               'The problems should clearly belong to that topic, not just to math in general.',
@@ -320,10 +346,10 @@ async function generateWorksheetWithOpenAi(topic: string, feedback?: string) {
         : []),
     ],
     'worksheet_generation',
-    buildWorksheetSchema(),
+    buildWorksheetSchema(problemCount),
   )
 
-  if (!isWorksheetGenerationResult(parsed)) {
+  if (!isWorksheetGenerationResult(parsed, problemCount)) {
     throw new Error('OpenAI returned an invalid worksheet generation shape.')
   }
 
@@ -371,7 +397,7 @@ async function reviewWorksheetAlignment(topic: string, worksheet: WorksheetConte
   return parsed
 }
 
-async function generateWorksheetContent(topic: string) {
+async function generateWorksheetContent(topic: string, problemCount: number) {
   if (!openAiApiKey) {
     throw new WorksheetGenerationError(
       'OpenAI API key is required to generate worksheets.',
@@ -382,7 +408,11 @@ async function generateWorksheetContent(topic: string) {
     let alignmentFeedback: string | undefined
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const generated = await generateWorksheetWithOpenAi(topic, alignmentFeedback)
+      const generated = await generateWorksheetWithOpenAi(
+        topic,
+        problemCount,
+        alignmentFeedback,
+      )
 
       if (!generated) {
         throw new WorksheetGenerationError('OpenAI returned no worksheet draft.')
@@ -495,15 +525,20 @@ Deno.serve(async (request) => {
     }
 
     if (request.method === 'POST') {
-      const { topic } = (await request.json()) as { topic?: string }
+      const { topic, problemCount: requestedProblemCount } =
+        (await request.json()) as {
+          topic?: string
+          problemCount?: number
+        }
 
       if (!topic?.trim()) {
         return json({ error: 'Topic is required.' }, 400)
       }
 
+      const problemCount = normalizeProblemCount(requestedProblemCount)
       const editToken = crypto.randomUUID()
       const editTokenHash = await hashToken(editToken)
-      const content = await generateWorksheetContent(topic)
+      const content = await generateWorksheetContent(topic, problemCount)
 
       const { data, error } = await supabase
         .from('worksheets')
