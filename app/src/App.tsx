@@ -117,11 +117,18 @@ function App() {
 
   async function handleGenerate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const nextTopic = topic.trim()
+
+    if (!nextTopic) {
+      setErrorMessage('Enter a math topic before generating a worksheet.')
+      return
+    }
+
     setIsGenerating(true)
     setErrorMessage('')
 
     try {
-      const nextWorksheet = await createWorksheet(topic.trim())
+      const nextWorksheet = await createWorksheet(nextTopic)
       setWorksheet(nextWorksheet)
     } catch (error) {
       setErrorMessage(
