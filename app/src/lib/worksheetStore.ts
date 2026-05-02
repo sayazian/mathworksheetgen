@@ -58,3 +58,11 @@ export function loadLatestWorksheetRecord() {
 
   return loadWorksheetRecord(latestId)
 }
+
+export function clearLatestWorksheetRecord() {
+  if (!isBrowser()) {
+    return
+  }
+
+  window.localStorage.removeItem(latestWorksheetKey)
+}

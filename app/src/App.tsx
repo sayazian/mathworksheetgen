@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import { buildMockWorksheetRecord } from './lib/mockWorksheet'
 import {
   createWorksheet,
   getApiModeLabel,
   getWorksheet,
   updateWorksheetVisibility,
 } from './lib/worksheetApi'
-import { loadLatestWorksheetRecord } from './lib/worksheetStore'
+import { clearLatestWorksheetRecord } from './lib/worksheetStore'
 import type { WorksheetRecord } from './types/worksheet'
 
 function getWorksheetParams() {
@@ -42,15 +41,17 @@ function setWorksheetParams(record: WorksheetRecord) {
   window.history.replaceState(null, '', nextUrl)
 }
 
-function App() {
-  const [topic, setTopic] = useState('fractions')
-  const [worksheet, setWorksheet] = useState<WorksheetRecord>(() => {
-    if (typeof window === 'undefined') {
-      return buildMockWorksheetRecord('fractions')
-    }
+function clearWorksheetParams() {
+  if (typeof window === 'undefined') {
+    return
+  }
 
-    return loadLatestWorksheetRecord() ?? buildMockWorksheetRecord('fractions')
-  })
+  window.history.replaceState(null, '', window.location.pathname)
+}
+
+function App() {
+  const [topic, setTopic] = useState('')
+  const [worksheet, setWorksheet] = useState<WorksheetRecord | null>(null)
   const [isLoadingWorksheet, setIsLoadingWorksheet] = useState(() =>
     hasWorksheetInUrl(),
   )
@@ -66,7 +67,9 @@ function App() {
       return
     }
 
-    setWorksheetParams(worksheet)
+    if (worksheet) {
+      setWorksheetParams(worksheet)
+    }
   }, [hasHydratedFromUrl, worksheet])
 
   useEffect(() => {
@@ -94,12 +97,14 @@ function App() {
         }
       } catch (error) {
         if (!isCancelled) {
+          setWorksheet(null)
           setErrorMessage(
             error instanceof Error
               ? error.message
               : 'Unable to load the worksheet from the URL.',
           )
           setHasHydratedFromUrl(true)
+          clearWorksheetParams()
         }
       } finally {
         if (!isCancelled) {
@@ -142,6 +147,10 @@ function App() {
   }
 
   async function handleVisibilityToggle() {
+    if (!worksheet) {
+      return
+    }
+
     const nextVisibility = worksheet.visibility === 'private' ? 'public' : 'private'
     setIsSavingVisibility(true)
     setErrorMessage('')
@@ -163,8 +172,20 @@ function App() {
     }
   }
 
+  function handleClear() {
+    setTopic('')
+    setWorksheet(null)
+    setErrorMessage('')
+    setIsLoadingWorksheet(false)
+    setIsGenerating(false)
+    setIsSavingVisibility(false)
+    setHasHydratedFromUrl(true)
+    clearLatestWorksheetRecord()
+    clearWorksheetParams()
+  }
+
   const shareUrl = (() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !worksheet) {
       return ''
     }
 
@@ -224,76 +245,105 @@ function App() {
                 : `Generate worksheet for ${topic || 'your topic'}`}
           </button>
 
-          <div className="preview-meta">
-            <span>Visibility: {worksheet.visibility}</span>
-            <span>Saved record: {worksheet.id.slice(0, 8)}</span>
-          </div>
+          <button
+            type="button"
+            className="secondary-action"
+            onClick={handleClear}
+            disabled={isLoadingWorksheet || isGenerating || isSavingVisibility}
+          >
+            Clear worksheet
+          </button>
 
-          <div className="secondary-actions">
-            <button
-              type="button"
-              className="secondary-action"
-              onClick={handleVisibilityToggle}
-              disabled={isSavingVisibility || isLoadingWorksheet}
-            >
-              {isSavingVisibility
-                ? 'Saving...'
-                : worksheet.visibility === 'private'
-                  ? 'Make public'
-                  : 'Make private'}
-            </button>
-            <p className="token-note">
-              This browser currently holds the worksheet edit token.
-            </p>
-          </div>
+          {worksheet ? (
+            <div className="preview-meta">
+              <span>Visibility: {worksheet.visibility}</span>
+              <span>Saved record: {worksheet.id.slice(0, 8)}</span>
+            </div>
+          ) : null}
 
-          <div className="share-card">
-            <p className="share-label">Current worksheet URL</p>
-            <code>{shareUrl}</code>
-          </div>
+          {worksheet ? (
+            <div className="secondary-actions">
+              <button
+                type="button"
+                className="secondary-action"
+                onClick={handleVisibilityToggle}
+                disabled={isSavingVisibility || isLoadingWorksheet}
+              >
+                {isSavingVisibility
+                  ? 'Saving...'
+                  : worksheet.visibility === 'private'
+                    ? 'Make public'
+                    : 'Make private'}
+              </button>
+              <p className="token-note">
+                This browser currently holds the worksheet edit token.
+              </p>
+            </div>
+          ) : null}
+
+          {worksheet ? (
+            <div className="share-card">
+              <p className="share-label">Current worksheet URL</p>
+              <code>{shareUrl}</code>
+            </div>
+          ) : null}
         </form>
 
         <section className="preview-card" aria-labelledby="preview-title">
           <div className="section-heading">
             <p className="section-kicker">Preview</p>
             <h2 id="preview-title">
-              {isLoadingWorksheet ? 'Loading worksheet...' : worksheet.content.title}
+              {isLoadingWorksheet
+                ? 'Loading worksheet...'
+                : worksheet
+                  ? worksheet.content.title
+                  : 'No worksheet yet'}
             </h2>
-            <p className="preview-subtitle">{worksheet.content.subtitle}</p>
+            <p className="preview-subtitle">
+              {worksheet
+                ? worksheet.content.subtitle
+                : 'Enter a topic and generate a worksheet to see problems, answers, and explanations.'}
+            </p>
           </div>
 
-          <div className="preview-grid">
-            <article>
-              <h3>Problems</h3>
-              <ol>
-                {worksheet.content.problems.map((problem, index) => (
-                  <li key={`${index}-${problem}`}>{problem}</li>
-                ))}
-              </ol>
-            </article>
+          {worksheet ? (
+            <div className="preview-grid">
+              <article>
+                <h3>Problems</h3>
+                <ol>
+                  {worksheet.content.problems.map((problem, index) => (
+                    <li key={`${index}-${problem}`}>{problem}</li>
+                  ))}
+                </ol>
+              </article>
 
-            <article>
-              <h3>Answer key</h3>
-              <ol>
-                {worksheet.content.problems.map((problem, index) => (
-                  <li key={`${problem}-${worksheet.content.answers[index]}`}>
-                    {worksheet.content.answers[index] ?? 'Missing answer'}
-                  </li>
-                ))}
-              </ol>
-            </article>
+              <article>
+                <h3>Answer key</h3>
+                <ol>
+                  {worksheet.content.problems.map((problem, index) => (
+                    <li key={`${problem}-${worksheet.content.answers[index]}`}>
+                      {worksheet.content.answers[index] ?? 'Missing answer'}
+                    </li>
+                  ))}
+                </ol>
+              </article>
 
-            <article className="explanations">
-              <h3>Brief explanations</h3>
-              <ol>
-                {worksheet.content.problems.map((problem, index) => (
-                  <li key={`${problem}-${worksheet.content.explanations[index]}`}>
-                    {worksheet.content.explanations[index] ?? 'Missing explanation'}
-                  </li>
-                ))}
-              </ol>
-            </article>
-          </div>
+              <article className="explanations">
+                <h3>Brief explanations</h3>
+                <ol>
+                  {worksheet.content.problems.map((problem, index) => (
+                    <li key={`${problem}-${worksheet.content.explanations[index]}`}>
+                      {worksheet.content.explanations[index] ?? 'Missing explanation'}
+                    </li>
+                  ))}
+                </ol>
+              </article>
+            </div>
+          ) : (
+            <div className="empty-preview">
+              <p>Problems, answer key, and explanations will appear here.</p>
+            </div>
+          )}
         </section>
       </section>
     </main>

@@ -19,18 +19,49 @@ describe('App', () => {
     ).toBeInTheDocument()
 
     expect(
-      screen.getByRole('button', { name: /generate worksheet for fractions/i }),
+      screen.getByRole('button', { name: /generate worksheet for your topic/i }),
     ).toBeInTheDocument()
 
-    expect(screen.getByText(/current worksheet url/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /clear worksheet/i })).toBeInTheDocument()
+    expect(screen.getByText(/no worksheet yet/i)).toBeInTheDocument()
+    expect(screen.queryByText(/current worksheet url/i)).not.toBeInTheDocument()
   })
 
-  it('shows concrete math problems in the preview', () => {
+  it('shows concrete math problems in the preview after generation', async () => {
     render(<App />)
 
-    expect(screen.getByText('Simplify 12/18.')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: /topic/i }), {
+      target: { value: 'fractions' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate worksheet for fractions/i }),
+    )
+
+    expect(await screen.findByText('Simplify 12/18.')).toBeInTheDocument()
     expect(screen.getByText('Add 3/4 + 2/5.')).toBeInTheDocument()
     expect(screen.getByText('23/20 or 1 3/20')).toBeInTheDocument()
+  })
+
+  it('clears the topic and generated worksheet', async () => {
+    render(<App />)
+
+    fireEvent.change(screen.getByRole('textbox', { name: /topic/i }), {
+      target: { value: 'division' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate worksheet for division/i }),
+    )
+
+    expect(await screen.findByText('72 / 8')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /clear worksheet/i }))
+
+    expect(screen.getByRole('textbox', { name: /topic/i })).toHaveValue('')
+    expect(screen.getByText(/no worksheet yet/i)).toBeInTheDocument()
+    expect(screen.queryByText('72 / 8')).not.toBeInTheDocument()
+    expect(screen.queryByText(/current worksheet url/i)).not.toBeInTheDocument()
   })
 
   it('generates subtraction problems for the subtraction topic', async () => {
@@ -65,7 +96,7 @@ describe('App', () => {
     expect(await screen.findByText('25')).toBeInTheDocument()
   })
 
-  it('renders one answer per problem even if stored data has extra answers', () => {
+  it('renders one answer per problem even if stored data has extra answers', async () => {
     const worksheet: WorksheetRecord = {
       id: 'extra-answer-test',
       topic: 'counting',
@@ -85,11 +116,15 @@ describe('App', () => {
       'mathworksheetgen.records',
       JSON.stringify({ [worksheet.id]: worksheet }),
     )
-    window.localStorage.setItem('mathworksheetgen.latestWorksheetId', worksheet.id)
+    window.history.replaceState(
+      null,
+      '',
+      `/?worksheet=${worksheet.id}&editToken=${worksheet.editToken}`,
+    )
 
     render(<App />)
 
-    expect(screen.getByText('A5')).toBeInTheDocument()
+    expect(await screen.findByText('A5')).toBeInTheDocument()
     expect(screen.queryByText('A6')).not.toBeInTheDocument()
     expect(screen.queryByText('E6')).not.toBeInTheDocument()
   })
