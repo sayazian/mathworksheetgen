@@ -11,8 +11,19 @@ interface ApiWorksheet {
   editToken?: string
 }
 
+type ConfigKey = keyof ImportMetaEnv
+
+function getConfigValue(key: ConfigKey) {
+  const runtimeValue =
+    typeof window === 'undefined'
+      ? undefined
+      : window.__MATH_WORKSHEET_CONFIG__?.[key]
+
+  return runtimeValue || import.meta.env[key]
+}
+
 function isMockMode() {
-  return import.meta.env.VITE_USE_MOCK_API === 'true'
+  return getConfigValue('VITE_USE_MOCK_API') === 'true'
 }
 
 function normalizeBaseUrl(baseUrl: string) {
@@ -20,13 +31,13 @@ function normalizeBaseUrl(baseUrl: string) {
 }
 
 function getFunctionsBaseUrl() {
-  const explicitFunctionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL
+  const explicitFunctionsUrl = getConfigValue('VITE_SUPABASE_FUNCTIONS_URL')
 
   if (explicitFunctionsUrl) {
     return normalizeBaseUrl(explicitFunctionsUrl)
   }
 
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL
+  const projectUrl = getConfigValue('VITE_SUPABASE_URL')
 
   if (!projectUrl) {
     return null
@@ -36,7 +47,7 @@ function getFunctionsBaseUrl() {
 }
 
 function getFunctionHeaders() {
-  const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  const publishableKey = getConfigValue('VITE_SUPABASE_PUBLISHABLE_KEY')
 
   if (!publishableKey) {
     throw new Error('Supabase publishable key is not configured.')

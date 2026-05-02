@@ -10,3 +10,7 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+interface Window {
+  readonly __MATH_WORKSHEET_CONFIG__?: ImportMetaEnv
+}
