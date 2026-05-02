@@ -104,7 +104,8 @@
 .error-banner,
 .token-note,
 .preview-meta,
-.share-label {
+.share-label,
+.share-status {
   font-size: 0.95rem;
 }
 
@@ -197,21 +198,15 @@
   margin: 0.6rem 0 0;
 }
 
-.share-card {
-  padding: 1rem;
-  border-radius: 18px;
-  background: rgba(255, 248, 238, 0.95);
-  border: 1px solid var(--border);
+.share-actions {
+  display: grid;
+  gap: 0.5rem;
 }
 
-.share-card code {
-  display: block;
-  margin-top: 0.5rem;
-  overflow-wrap: anywhere;
-}
-
-.share-label {
+.share-label,
+.share-status {
   color: var(--muted);
+  margin: 0;
 }
 
 .preview-grid {

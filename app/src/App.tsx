@@ -58,6 +58,7 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSavingVisibility, setIsSavingVisibility] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [copyMessage, setCopyMessage] = useState('')
   const [hasHydratedFromUrl, setHasHydratedFromUrl] = useState(() =>
     !hasWorksheetInUrl(),
   )
@@ -135,6 +136,7 @@ function App() {
     try {
       const nextWorksheet = await createWorksheet(nextTopic)
       setWorksheet(nextWorksheet)
+      setCopyMessage('')
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -161,6 +163,7 @@ function App() {
         nextVisibility,
       )
       setWorksheet(nextWorksheet)
+      setCopyMessage('')
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -179,6 +182,7 @@ function App() {
     setIsLoadingWorksheet(false)
     setIsGenerating(false)
     setIsSavingVisibility(false)
+    setCopyMessage('')
     setHasHydratedFromUrl(true)
     clearLatestWorksheetRecord()
     clearWorksheetParams()
@@ -191,13 +195,23 @@ function App() {
 
     const publicUrl = new URL(window.location.href)
     publicUrl.searchParams.set('worksheet', worksheet.id)
-
-    if (worksheet.visibility === 'public') {
-      publicUrl.searchParams.delete('editToken')
-    }
+    publicUrl.searchParams.delete('editToken')
 
     return publicUrl.toString()
   })()
+
+  async function handleCopyShareLink() {
+    if (!shareUrl) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopyMessage('Public link copied.')
+    } catch {
+      setCopyMessage('Unable to copy. Select and copy the browser URL instead.')
+    }
+  }
 
   return (
     <main className="app-shell">
@@ -282,9 +296,26 @@ function App() {
           ) : null}
 
           {worksheet ? (
-            <div className="share-card">
-              <p className="share-label">Current worksheet URL</p>
-              <code>{shareUrl}</code>
+            <div className="share-actions">
+              {worksheet.visibility === 'public' ? (
+                <button
+                  type="button"
+                  className="secondary-action"
+                  onClick={handleCopyShareLink}
+                >
+                  Copy public link
+                </button>
+              ) : (
+                <p className="share-label">
+                  Make this worksheet public before sharing a link.
+                </p>
+              )}
+
+              {copyMessage ? (
+                <p className="share-status" role="status">
+                  {copyMessage}
+                </p>
+              ) : null}
             </div>
           ) : null}
         </form>

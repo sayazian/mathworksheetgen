@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { vi } from 'vitest'
 
 import App from './App'
 import type { WorksheetRecord } from './types/worksheet'
@@ -24,7 +25,7 @@ describe('App', () => {
 
     expect(screen.getByRole('button', { name: /clear worksheet/i })).toBeInTheDocument()
     expect(screen.getByText(/no worksheet yet/i)).toBeInTheDocument()
-    expect(screen.queryByText(/current worksheet url/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/copy public link/i)).not.toBeInTheDocument()
   })
 
   it('shows concrete math problems in the preview after generation', async () => {
@@ -61,7 +62,42 @@ describe('App', () => {
     expect(screen.getByRole('textbox', { name: /topic/i })).toHaveValue('')
     expect(screen.getByText(/no worksheet yet/i)).toBeInTheDocument()
     expect(screen.queryByText('72 / 8')).not.toBeInTheDocument()
-    expect(screen.queryByText(/current worksheet url/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/copy public link/i)).not.toBeInTheDocument()
+  })
+
+  it('shows copy link only after the worksheet is public', async () => {
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    })
+
+    render(<App />)
+
+    fireEvent.change(screen.getByRole('textbox', { name: /topic/i }), {
+      target: { value: 'fractions' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /generate worksheet for fractions/i }),
+    )
+
+    expect(
+      await screen.findByText(/make this worksheet public before sharing a link/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /copy public link/i })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /make public/i }))
+
+    const copyButton = await screen.findByRole('button', {
+      name: /copy public link/i,
+    })
+    fireEvent.click(copyButton)
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringMatching(/\?worksheet=/),
+    )
+    expect(await screen.findByText(/public link copied/i)).toBeInTheDocument()
   })
 
   it('generates subtraction problems for the subtraction topic', async () => {
