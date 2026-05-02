@@ -164,4 +164,36 @@ describe('App', () => {
     expect(screen.queryByText('A6')).not.toBeInTheDocument()
     expect(screen.queryByText('E6')).not.toBeInTheDocument()
   })
+
+  it('shows only problems for public worksheet links without edit tokens', async () => {
+    const worksheet: WorksheetRecord = {
+      id: 'public-problem-only-test',
+      topic: 'counting',
+      visibility: 'public',
+      createdAt: new Date().toISOString(),
+      content: {
+        title: 'Counting Practice',
+        subtitle: 'Preview',
+        problems: ['Problem 1', 'Problem 2', 'Problem 3', 'Problem 4', 'Problem 5'],
+        answers: ['A1', 'A2', 'A3', 'A4', 'A5'],
+        explanations: ['E1', 'E2', 'E3', 'E4', 'E5'],
+      },
+    }
+
+    window.localStorage.setItem(
+      'mathworksheetgen.records',
+      JSON.stringify({ [worksheet.id]: worksheet }),
+    )
+    window.history.replaceState(null, '', `/?worksheet=${worksheet.id}`)
+
+    render(<App />)
+
+    expect(await screen.findByText('Problem 5')).toBeInTheDocument()
+    expect(screen.queryByText('Answer key')).not.toBeInTheDocument()
+    expect(screen.queryByText('Brief explanations')).not.toBeInTheDocument()
+    expect(screen.queryByText('A1')).not.toBeInTheDocument()
+    expect(screen.queryByText('E1')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /make private/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /copy public link/i })).not.toBeInTheDocument()
+  })
 })

@@ -199,6 +199,7 @@ function App() {
 
     return publicUrl.toString()
   })()
+  const canEditWorksheet = Boolean(worksheet?.editToken)
 
   async function handleCopyShareLink() {
     if (!shareUrl) {
@@ -268,14 +269,14 @@ function App() {
             Clear worksheet
           </button>
 
-          {worksheet ? (
+          {worksheet && canEditWorksheet ? (
             <div className="preview-meta">
               <span>Visibility: {worksheet.visibility}</span>
               <span>Saved record: {worksheet.id.slice(0, 8)}</span>
             </div>
           ) : null}
 
-          {worksheet ? (
+          {worksheet && canEditWorksheet ? (
             <div className="secondary-actions">
               <button
                 type="button"
@@ -295,7 +296,7 @@ function App() {
             </div>
           ) : null}
 
-          {worksheet ? (
+          {worksheet && canEditWorksheet ? (
             <div className="share-actions">
               {worksheet.visibility === 'public' ? (
                 <button
@@ -338,7 +339,11 @@ function App() {
           </div>
 
           {worksheet ? (
-            <div className="preview-grid">
+            <div
+              className={
+                canEditWorksheet ? 'preview-grid' : 'preview-grid problem-only'
+              }
+            >
               <article>
                 <h3>Problems</h3>
                 <ol>
@@ -348,27 +353,34 @@ function App() {
                 </ol>
               </article>
 
-              <article>
-                <h3>Answer key</h3>
-                <ol>
-                  {worksheet.content.problems.map((problem, index) => (
-                    <li key={`${problem}-${worksheet.content.answers[index]}`}>
-                      {worksheet.content.answers[index] ?? 'Missing answer'}
-                    </li>
-                  ))}
-                </ol>
-              </article>
+              {canEditWorksheet ? (
+                <>
+                  <article>
+                    <h3>Answer key</h3>
+                    <ol>
+                      {worksheet.content.problems.map((problem, index) => (
+                        <li key={`${problem}-${worksheet.content.answers[index]}`}>
+                          {worksheet.content.answers[index] ?? 'Missing answer'}
+                        </li>
+                      ))}
+                    </ol>
+                  </article>
 
-              <article className="explanations">
-                <h3>Brief explanations</h3>
-                <ol>
-                  {worksheet.content.problems.map((problem, index) => (
-                    <li key={`${problem}-${worksheet.content.explanations[index]}`}>
-                      {worksheet.content.explanations[index] ?? 'Missing explanation'}
-                    </li>
-                  ))}
-                </ol>
-              </article>
+                  <article className="explanations">
+                    <h3>Brief explanations</h3>
+                    <ol>
+                      {worksheet.content.problems.map((problem, index) => (
+                        <li
+                          key={`${problem}-${worksheet.content.explanations[index]}`}
+                        >
+                          {worksheet.content.explanations[index] ??
+                            'Missing explanation'}
+                        </li>
+                      ))}
+                    </ol>
+                  </article>
+                </>
+              ) : null}
             </div>
           ) : (
             <div className="empty-preview">
